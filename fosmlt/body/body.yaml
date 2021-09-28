@@ -1,0 +1,36 @@
+esphome:
+  name: body
+  platform: ESP32
+  board: wemos_d1_mini32
+  # on_boot:
+  #   priority: 700
+  #   then:
+  #     - output.set_level:
+  #         id: motor_speed_control
+  #         level: 0%
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "fosmlt body Fallback Hotspot"
+    password: !secret ap_pass
+
+# Enable logging
+logger:
+  level: DEBUG
+  # level: INFO
+
+# ota:
+
+# Example configuration entry
+mqtt:
+  broker: 192.168.1.167
+  # username: livingroom
+  # password: MyMQTTPassword
+
+# web_server:
+#   port: 80
+
+esp32_ble:

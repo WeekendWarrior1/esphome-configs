@@ -1,0 +1,282 @@
+esphome:
+  name: testesp
+  platform: ESP8266
+  board: d1_mini
+  platformio_options:
+    upload_speed: 921600
+  # on_boot:
+  #   priority: 700
+  #   then:
+  #     - script.execute: stair_top_on
+
+# wifi:
+#   ssid: !secret wifi_ssid
+#   password: !secret wifi_pass
+#   # Enable fallback hotspot (captive portal) in case wifi connection fails
+#   ap:
+#     ssid: "fosmlt test Fallback Hotspot"
+#     password: !secret ap_pass
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "fosmlt test Fallback Hotspot"
+    password: !secret ap_pass
+  manual_ip:
+    static_ip: 192.168.1.154
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+
+# Enable logging
+logger:
+  #level: DEBUG
+  level: VERBOSE
+
+web_server:
+  port: 80
+
+ota:
+
+api:
+
+# external_components:
+#   - source:
+#       type: git
+#       url: https://github.com/WeekendWarrior1/esphome
+#       ref: text_sensor_filters
+#     components: [ text_sensor ]
+
+text_sensor:
+  # - platform: template
+  #   name: "Template Text Sensor"
+  #   update_interval: 5s
+  # - platform: version
+  #   name: "ESPHome Version"
+  #   filters:
+  #     - lambda: return {"Hello World"};
+  #     - to_upper:
+  #     - append: " lel"
+  #     - prepend: "boi "
+
+  - platform: template
+    name: "Template Text Sensor"
+    update_interval: 5s
+    lambda: |-
+      return {""};
+    filters:
+      - lambda: return {"Hello World"};
+      - to_upper:
+      # - to_lower:
+      - append: "_prefix"
+      - prepend: "suffix_"
+      - substitute:
+        - "suf -> foo"
+        - "pre -> bar"
+      - lambda: |-
+          if (x == "Hello") {
+            return x + "bar";
+          } else {
+            return x + "foo";
+          }
+    on_raw_value:
+      - logger.log: "raw"
+    # on_value:
+    #   - logger.log: "raw"
+      
+
+
+# # Example configuration entry
+# sensor:
+#   - platform: resistance
+#     sensor: source_sensor
+#     configuration: DOWNSTREAM
+#     resistor: 10kOhm
+#     name: Resistance Sensor
+#     # reference_voltage: 1.1v
+
+# # Example source sensor:
+#   - platform: adc
+#     id: source_sensor
+#     pin: A0
+#     update_interval: 100ms
+#     filters:
+#       - multiply: 3.3
+
+# i2c:
+#   sda: D5
+#   scl: D6
+#   # scan: true
+#   id: bus_a
+
+# - platform: at24c
+#   i2c_id: bus_a
+#   address: 0x76
+# switch:
+#   - platform: template
+#     name: "Template Switch"
+#     lambda: |-
+#       return false;
+#     turn_on_action:
+#       - fan.cycle_speed: livingRoomFan
+
+# output:
+#   - platform: esp8266_pwm
+#     pin: D1
+#     frequency: 1000 Hz
+#     id: my_output_1
+
+# fan:
+#   - platform: speed
+#     output: my_output_1
+#     name: "Living Room Fan"
+#     id: livingRoomFan
+#     speed_count: 3
+#     on_turn_on:
+#     - logger.log: "Fan Turned On!"
+#     on_speed_set:
+#     - logger.log: "Fan Speed was changed!"
+#     on_turn_off:
+#     - logger.log: "Fan Turned Off!"
+
+
+# light:
+#   - platform: d1dimmer
+#     id: lol
+
+# light:
+#   - platform: monochromatic
+#     name: "stair_14"
+#     id: stair_14
+#     output: output_component1
+#   - platform: monochromatic
+#     name: "stair_13"
+#     id: stair_13
+#     output: output_component2
+
+# # Example output entry
+# output:
+#   - platform: esp8266_pwm
+#     id: output_component1
+#     pin: D1
+#   - platform: esp8266_pwm
+#     id: output_component2
+#     pin: D2
+
+# script:
+#   - id: stair_top_on
+#     then:
+#       - lambda: !lambda |-
+#           light::LightState *myLights[2] = { id(stair_14), id(stair_13) };
+
+#           for (int i = 0; i < 2; i++) {
+#             auto call = myLights[i]->turn_on();
+#             call.set_transition_length(1);
+#             call.set_brightness(1000.0 / 100.0);
+#             call.perform();
+#             // delay is in ms
+#             delay(2 * 1000);
+#           }
+
+
+
+# globals:
+#   - id: sample_count
+#     type: std::string
+#     restore_value: no
+#     initial_value: '"hello"'
+
+# text_sensor:
+#   - platform: template
+#     internal: true
+#     name: "mydis"
+#     id: mydis
+
+# sensor:
+#   - platform: adc
+#     id: source_sensor
+#     name: "AV-Voltage"
+#     internal: true
+#     pin: A0
+#     update_interval: 10ms
+#     accuracy_decimals: 3
+#     filters:
+#       - lambda: |-
+#           id(sample_count) += 1;
+#           id(samples) += (x-512)*(x-512);
+#           return x;
+
+#   - platform: template
+#     name: "RMS"
+#     id: calced_rms
+#     update_interval: 1s
+#     lambda: |-
+#       ESP_LOGD(TAG, "Sample total is: %f, number of samples: %f, mean is: %f", id(samples), id(sample_count), id(samples)/id(sample_count));
+#       float myVal = (sqrt(id(samples)/id(sample_count)))*1.866
+#       id(sample_count) = 0;
+#       id(samples) = 0.0;
+#       return myVal;
+
+# external_components:
+#   - source:
+#       type: git
+#       url: https://github.com/WeekendWarrior1/esphome
+#       ref: feedback_fan
+#     components: [ feedback_fan ]
+
+# stepper:
+#   - platform: feedback_fan
+#     id: my_closed_loop_motor
+#     initial_output: 30
+#     min_output: 10
+#     positional_threshold: 50
+#     sensor_id: my_rotary_encoder
+#     fan_id: hbridge_motor
+#     # max_speed: inf
+#     max_speed: 500 steps/s
+#     #acceleration: 20 steps/s^2
+#     #deceleration: 20 steps/s^2
+
+
+# light:
+#   - platform: neopixelbus
+#     type: GRB
+#     pin: GPIO3
+#     num_leds: 4
+#     name: "NeoPixel Light"
+#     effects:
+#       - addressable_rainbow:
+#       - addressable_scan:
+#       - addressable_twinkle:
+
+# Example output entry
+# output:
+#   - platform: esp8266_pwm
+#     id: output_component1
+#     pin: D1
+#   - platform: esp8266_pwm
+#     id: output_component2
+#     pin: D2
+#   - platform: esp8266_pwm
+#     id: output_component3
+#     pin: D3
+#   - platform: esp8266_pwm
+#     id: output_component4
+#     pin: D4
+
+# light:
+#   - platform: rgbw
+#     name: "test_led_strip_8266"
+#     id: test_led_strip_8266
+#     gamma_correct: 0
+#     red: output_component1
+#     green: output_component2
+#     blue: output_component3
+#     white: output_component4
+#     default_transition_length: 0s
+#     color_interlock: true
+#     emulate_rgbww:
+#       blue: 20% #mix in 20% blue light to white to emulate cold_white
+#       red: 40%  #mix in 40% red light to white to emulate warm_white
+#       cold_white_color_temperature: 6536 K
+#       warm_white_color_temperature: 2000 K

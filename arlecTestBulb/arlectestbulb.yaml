@@ -1,0 +1,95 @@
+substitutions:
+  name: 'ArlecTestBulb'
+  device: 'arlectestbulb'
+  reboot_timeout: 1h
+  update_interval: 1min
+  #static_ip: 10.10.10.88
+
+
+  
+esphome:
+  name: ${device}
+  platform: ESP8266
+#  board: esp01_1m
+  board: d1_mini
+  #libraries:
+  #  - "esphome/components/light/addressable_light.h"
+  #includes: 
+  #  - rgb_light_output.h
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "arlectestbulb Fallback Hotspot"
+    password: !secret ap_pass
+
+# Enable logging
+logger:
+  level: DEBUG
+  #level: VERY_VERBOSE
+
+#ota:
+
+api:
+
+web_server:
+  port: 80
+
+output:
+  - platform: esp8266_pwm
+    id: output_red
+#    pin: GPIO4
+    pin: GPIO13
+  - platform: esp8266_pwm
+    id: output_green
+#    pin: GPIO12
+    pin: GPIO12
+  - platform: esp8266_pwm
+    id: output_blue
+#    pin: GPIO14
+    pin: GPIO14
+  - platform: esp8266_pwm
+    id: output_warm_white
+#    pin: GPIO13
+    pin: GPIO5
+  - platform: esp8266_pwm
+    id: output_cold_white
+#    pin: GPIO5
+    pin: GPIO4
+
+# here go the light definitions, effects and restore mode
+light:
+  # - platform: rgbww
+  - platform: rgbpixel
+    name: '${name}'
+    id: '${device}'
+    red: output_red
+    green: output_green
+    blue: output_blue
+    # warm_white: output_warm_white
+    # cold_white: output_cold_white
+    # warm_white_color_temperature: 2800 K
+    # cold_white_color_temperature: 6200 K
+    #addressable_pixel: true
+
+    effects:
+      #- wled:
+          # port: 21324
+      - random: #RandomLightEffect
+
+    # Attempt to restore state and default to ON if the physical switch is actuated.
+    #restore_mode: RESTORE_DEFAULT_ON
+
+
+  #- platform: fastled_clockless
+  #  chipset: WS2812B
+  #  pin: GPIO2
+  #  num_leds: 1
+  #  rgb_order: GRB
+  #  name: "FastLED WS2812b Light"
+  #  effects:
+  #    - random: #RandomLightEffect
+      #- wled:
+          #port: 21324

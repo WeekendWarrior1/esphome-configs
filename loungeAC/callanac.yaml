@@ -1,0 +1,72 @@
+esphome:
+  name: loungeac
+  platform: ESP32
+  board: wemos_d1_mini32
+  includes: 
+    - panasonic_ir.h
+  libraries:
+    - IRremoteESP8266
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "loungeac Fallback Hotspot"
+    password: !secret ap_pass
+
+# Enable logging
+logger:
+    level: VERBOSE
+
+ota:
+
+api:
+
+remote_receiver:
+  - id: rcvr
+    pin:
+      number: GPIO18
+      # inverted: True
+      # mode: INPUT_PULLUP
+    # high 55% tolerance is recommended for some remote control units
+    tolerance: 55%
+    dump: all
+
+  - id: realir
+    pin:
+      number: GPIO17
+      inverted: True
+      mode: INPUT_PULLUP
+    # high 55% tolerance is recommended for some remote control units
+    tolerance: 55%
+    dump: all
+
+# climate:
+# - platform: custom
+#   lambda: |-
+#     auto my_panasonic = new PanasonicAC();
+#     App.register_component(my_panasonic);
+#     return {my_panasonic};
+
+#   climates:
+#     - name: "Lounge AC"
+
+#     #implement slider for vertical Swing
+#     #and quiet+powerful buttons
+
+remote_transmitter:
+  # pin: GPIO32
+  # pin: GPIO21
+  pin:
+    number: GPIO19
+    # inverted: True
+  # carrier_duty_percent: 50%
+  carrier_duty_percent: 100%
+
+climate:
+  - platform: panasonic       # adjust to match your AC unit!
+    name: "Lounge AC"
+    # receiver_id: rcvr
+    receiver_id: realir
+    supports_horizontal_swing: true

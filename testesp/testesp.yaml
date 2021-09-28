@@ -1,0 +1,26 @@
+esphome:
+    name: testesp
+    platform: ESP8266
+    board: d1_mini
+  
+  wifi:
+    ssid: !secret wifi_ssid
+    password: !secret wifi_pass
+  
+  # Enable logging
+  logger:
+  
+  ota:
+  
+  api:
+    
+      #implement slider for vertical Swing
+      #and quiet+powerful buttons
+
+output:
+- platform: ...
+    id: my_output_id
+#    power_supply: power_supply_id
+    inverted: False
+    min_power: 0.00
+    max_power: 0.05

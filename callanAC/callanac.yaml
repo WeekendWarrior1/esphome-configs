@@ -1,0 +1,59 @@
+esphome:
+  name: callanac
+  platform: ESP8266
+  board: d1_mini
+#  includes: 
+#    - panasonic_ir.h
+#  libraries:
+#    - IRremoteESP8266
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "callanac Fallback Hotspot"
+    password: !secret ap_pass
+
+# Enable logging
+logger:
+    level: VERBOSE
+
+ota:
+
+api:
+
+#climate:
+#- platform: custom
+#  lambda: |-
+#    auto my_panasonic = new PanasonicAC();
+#    App.register_component(my_panasonic);
+#    return {my_panasonic};
+
+#  climates:
+#    - name: "Callan's AC"
+
+    #implement slider for vertical Swing
+    #and quiet+powerful buttons
+remote_transmitter:
+  pin:
+    number: D3
+    inverted: True
+  carrier_duty_percent: 100%
+
+climate:
+  - platform: panasonic
+    name: "Callan's AC"
+    supports_horizontal_swing: false
+
+light:
+  - platform: monochromatic
+    name: "Callan's AC LED strip"
+    output: mosfet_output_gate
+
+output:
+  - platform: esp8266_pwm
+    id: mosfet_output_gate
+    pin: D2
+    frequency: 512Hz
+#    min_power: 0.001

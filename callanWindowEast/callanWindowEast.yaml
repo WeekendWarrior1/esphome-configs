@@ -1,0 +1,146 @@
+esphome:
+    name: callanwindoweast
+    #platform: ESP8266
+    #board: d1_mini
+    platform: ESP32
+    board: wemos_d1_mini32
+  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "CallanWindowEast Hotspot"
+    password: !secret ap_pass
+
+# Enable logging
+logger:
+  level: DEBUG
+
+ota:
+
+api:
+
+# useful for testing, but then probably best to disable (may cause reboots?)
+web_server:
+  port: 80
+
+#output:
+#  - platform: esp32_dac
+#    pin: GPIO25
+#    id: dac_output
+
+stepper:
+  - platform: a4988 
+    id: mainStepper
+    sleep_pin:
+      number: GPIO5
+    step_pin: GPIO14
+    dir_pin: GPIO23
+    max_speed: 610 steps/s
+    #acceleration: 210 steps/s^2
+    acceleration: 100 steps/s^2
+    #deceleration: 420 steps/s^2
+    deceleration: 220 steps/s^2
+
+output:                 # https://learn.adafruit.com/improve-brushed-dc-motor-performance/introduction
+  - platform: ledc
+    pin: GPIO33   #step_pin
+    id: motor1_forward
+    #frequency: 1220Hz
+    frequency: 19531Hz #https://esphome.io/components/output/ledc.html#recommended-frequencies
+    #frequency: 39062Hz  #39063Hz #?
+  - platform: ledc
+    pin: GPIO18   #dir_pin
+    id: motor1_reverse
+    #frequency: 1220Hz
+    frequency: 19531Hz #https://esphome.io/components/output/ledc.html#recommended-frequencies
+    #frequency: 39062Hz  #39063Hz #?
+
+
+dc_motor:    # based off stepper?
+  - platform: h_bridge   # outputs?
+    forward: motor1_forward 
+    reverse: motor1_reverse # optional
+    decay: slow   # slow decay mode (braking) or fast decay (coasting).
+    feedback: mypulsecounter    # sensor, pulse counter or rotary encoder, what about i2c as5600
+    # or 
+    feedback: 
+      id: mypulsecounter
+      set_speed: 60 steps/s
+      acceleration: 20 steps/s^2
+      deceleration: 30 steps/s^2
+      control_parameters:   #should this have default values?     # https://esphome.io/components/climate/pid.html
+        kp: 0.49460
+        ki: 0.00487
+        kd: 12.56301
+
+
+#test with 12v LED
+#https://www.ti.com/lit/ds/symlink/drv8871.pdf 7.3.1 details braking
+#   IN1   IN2   OUT1    OUT2    DESCRIPTION
+#   0     0     High-Z  High-Z  Coast; H-bridge disabled to High-Z (sleep entered after 1 ms)
+#   0     1     L       H       Reverse (Current OUT2 → OUT1)
+#   1     0     H       L       Forward (Current OUT1 → OUT2)
+#   1     1     L       L       Brake; low-side slow decay
+cover:
+  - platform: template
+    device_class: window
+    name: "Callan's East Window"
+    open_action:
+      - output.turn_off: motor1_reverse
+      - output.turn_on: motor1_forward
+      #- output.set_level: #coast based speed control
+      #    id: motor1_forward
+      #    level: 80%
+      - output.set_level: #brake based speed control
+          id: motor1_reverse
+          level: 50%
+      - delay: 2s
+      - output.turn_off: motor1_forward
+      - output.turn_off: motor1_reverse
+    close_action:
+      - output.turn_off: motor1_forward
+      - output.turn_on: motor1_reverse
+      #- output.set_level: #coast based speed control
+      #    id: motor1_reverse
+      #    level: 50%
+      - output.set_level: #brake based speed control
+          id: motor1_forward
+          level: 50%
+      - delay: 2s
+      - output.turn_off: motor1_forward
+      - output.turn_off: motor1_reverse
+    stop_action:
+      - output.turn_on: motor1_forward #brake
+      - output.turn_on: motor1_reverse #brake
+      - delay: 100ms
+      - output.turn_off: motor1_forward
+      - output.turn_off: motor1_reverse
+    optimistic: true
+
+
+  - platform: template
+    device_class: shade
+    name: "Callan's East Blind"
+    open_action:
+      - stepper.set_speed:
+          id: mainStepper
+          #speed: 420 steps/s
+          speed: 250 steps/s
+      - stepper.set_target:
+          id: mainStepper
+          target: 0
+    close_action:
+      - stepper.set_speed:
+          id: mainStepper
+          speed: 610 steps/s
+      - stepper.set_target:
+          id: mainStepper
+          target: 16000
+    stop_action:
+      - stepper.set_target:
+          id: mainStepper
+          target: !lambda return id(mainStepper).current_position;
+    optimistic: true

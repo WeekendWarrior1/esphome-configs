@@ -1,0 +1,244 @@
+esphome:
+  name: testesp
+  platform: ESP32
+  board: wemos_d1_mini32
+  # platform: ESP8266
+  # board: d1_mini
+  # on_boot:
+  #   priority: 700
+  #   then:
+  #     - output.set_level:
+  #         id: motor_speed_control
+  #         level: 0%
+#on boot: if not top endstop, reverse until you find it, then set rotary encoder to 0
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "testesp Fallback Hotspot"
+    password: !secret ap_pass
+
+# Enable logging
+logger:
+  level: DEBUG
+  # level: INFO
+
+ota:
+
+api:
+
+web_server:
+  port: 80
+
+
+sensor:
+  - platform: rotary_encoder
+    id: my_rotary_encoder
+    internal: true
+    name: "Rotary Encoder"
+    pin_a: GPIO10
+    pin_b: GPIO34
+
+
+output:                 # https://learn.adafruit.com/improve-brushed-dc-motor-performance/introduction
+  - platform: ledc
+    pin: GPIO33
+    id: motor_forward_pin
+    frequency: 32Hz #https://esphome.io/components/output/ledc.html#recommended-frequencies
+  - platform: ledc
+    pin: GPIO18
+    id: motor_reverse_pin
+    frequency: 32Hz #https://esphome.io/components/output/ledc.html#recommended-frequencies
+  - platform: ledc
+    pin: GPIO19
+    id: motor_enable
+    frequency: 32Hz #https://esphome.io/components/output/ledc.html#recommended-frequencies
+
+  # - platform: esp32_dac
+  #   pin: GPIO25
+  #   id: motor_speed_control
+  #   min_power: 0.33
+  #   #max_power: 0.80
+  #   zero_means_zero: true
+
+# light:
+#   - platform: monochromatic
+#     #internal: true
+#     name: "motor_speed_control"
+#     output: motor_speed_control
+#     gamma_correct: 0
+#     default_transition_length: 0s
+
+# dc_motor:
+#   - platform: direct
+#     id: motor_forward
+#     output: motor_forward_pin
+#   - platform: direct
+#     id: motor_reverse
+#     output: motor_reverse_pin
+
+fan:
+  # - platform: speed
+  #   internal: True
+  #   id: motor_forward
+  #   output: motor_forward_pin
+  #   name: "motor_forward"
+
+  # - platform: speed
+  #   internal: True
+  #   id: motor_reverse
+  #   output: motor_reverse_pin
+  #   name: "motor_reverse"
+
+  - platform: hbridge
+    internal: true
+    name: hbridge_motor
+    id: hbridge_motor
+    pin_a: motor_forward_pin
+    pin_b: motor_reverse_pin
+    # enable_pin: motor_enable
+    decay_mode: slow   # slow decay mode (braking) or fast decay (coasting).
+
+# light:
+#   - platform: hbridge
+#     id: mainlight
+#     name: "Hbridge Lights"
+#     pin_a: motor_forward_pin
+#     pin_b: motor_reverse_pin
+
+stepper:
+  - platform: feedback_fan
+    id: my_closed_loop_motor
+    initial_output: 14
+    min_output: 14
+    sensor_id: my_rotary_encoder
+    fan_id: hbridge_motor
+    # max_speed: inf
+    max_speed: 10 steps/s
+    acceleration: 2 steps/s^2
+    deceleration: 2 steps/s^2
+
+
+
+# dc_motor:    # based off stepper?
+#   - platform: h_bridge   # outputs?
+#     id: my_dc_motor
+#     forward: motor1_forward 
+#     reverse: motor1_reverse # optional
+#     decay: slow   # slow decay mode (braking) or fast decay (coasting).
+#     feedback: my_rotary_encoder    #optional    # sensor, pulse counter or rotary encoder, what about i2c as5600
+
+
+
+    # or 
+    # feedback:       # - dc_motor.set_target:
+      #     id: mainStepper
+      #     target: !lambda return id(my_rotary_encoder).value;
+    #   id: mypulsecounter
+    #   set_speed: 10 steps/s   # 1 full rotation every 2 seconds
+    #   acceleration: 4 steps/s^2
+    #   deceleration: 5 steps/s^2
+    #   override_forward_control: my_buck_dac variable voltage supply   #optional
+    #   override_reverse_control: my_buck_dac variable voltage supply   #optional
+    #   control_parameters:   #should this have default values?     # https://esphome.io/components/climate/pid.html
+    #     kp: 0.49460
+    #     ki: 0.00487
+    #     kd: 12.56301
+
+cover:
+  - platform: template
+    device_class: window
+    name: "Lounge Backdoor Blind"
+    open_action:
+      # - dc_motor.forward: my_dc_motor
+      # - delay: 1s
+      # - dc_motor.brake: my_dc_motor
+      # - delay: 100ms
+      # - dc_motor.stop: my_dc_motor
+
+      # - dc_motor.set_target:
+      #   id: my_dc_motor
+      #   target: 0   #reverse
+
+      # - fan.turn_on:
+      #     id: hbridge_motor
+      #     speed: 20
+      #     direction: forward
+      # - delay: 5s
+      # - fan.brake: hbridge_motor
+      # - delay: 1s
+      # - fan.turn_off: hbridge_motor
+
+      - stepper.set_speed:
+          id: my_closed_loop_motor
+          speed: 20 steps/s
+      - stepper.set_acceleration:
+          id: my_closed_loop_motor
+          acceleration: 2 steps/s^2
+      - stepper.set_deceleration:
+          id: my_closed_loop_motor
+          deceleration: 2 steps/s^2
+      - stepper.set_initial_output:
+          id: my_closed_loop_motor
+          initial_output: 100
+
+      - stepper.set_target:
+          id: my_closed_loop_motor
+          target: 0
+
+    # close_action:
+      # - dc_motor.reverse: my_dc_motor
+      # - delay: 1s
+      # - dc_motor.brake: my_dc_motor
+      # - delay: 100ms
+      # - dc_motor.stop: my_dc_motor
+
+      # - dc_motor.set_target:
+      #   id: my_dc_motor
+      #   target: 300   #forward
+
+      # - fan.turn_on:
+      #     id: hbridge_motor
+      #     speed: 20
+      #     direction: reverse
+      # - delay: 5s
+      # - fan.brake: hbridge_motor
+      # - delay: 1s
+      # - fan.turn_off: hbridge_motor
+
+    close_action:
+      - stepper.set_speed:
+          id: my_closed_loop_motor
+          speed: 10 steps/s
+      - stepper.set_acceleration:
+          id: my_closed_loop_motor
+          acceleration: 1 steps/s^2
+      - stepper.set_deceleration:
+          id: my_closed_loop_motor
+          deceleration: 1 steps/s^2
+      - stepper.set_initial_output:
+          id: my_closed_loop_motor
+          initial_output: 80
+
+      - stepper.set_target:
+          id: my_closed_loop_motor
+          target: 100
+
+    stop_action:
+      # - dc_motor.set_target:
+      #     id: mainStepper
+      #     target: !lambda return id(my_rotary_encoder).value;
+      # - stepper.set_target:
+      #     id: my_closed_loop_motor
+      #     target: !lambda return id(my_rotary_encoder).state;
+
+      # - fan.turn_off: motor_forward
+      # - fan.turn_off: motor_reverse
+
+      - fan.brake: hbridge_motor
+      - delay: 1s
+      - fan.turn_off: hbridge_motor
+
+    optimistic: true

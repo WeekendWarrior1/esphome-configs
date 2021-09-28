@@ -1,0 +1,111 @@
+esphome:
+    name: callanwindoweast
+    #platform: ESP8266
+    #board: d1_mini
+    platform: ESP32
+    board: wemos_d1_mini32
+  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "CallanWindowEast Hotspot"
+    password: !secret ap_pass
+
+# Enable logging
+logger:
+  level: DEBUG
+
+ota:
+
+api:
+
+web_server:
+  port: 80
+
+output:
+  - platform: esp32_dac
+    pin: GPIO25
+    id: dac_output
+
+stepper:
+  - platform: a4988 
+    id: mainStepper
+    sleep_pin:
+      number: GPIO5
+      #inverted: True
+    step_pin: GPIO14
+    dir_pin: GPIO23
+    max_speed: 610 steps/s
+    acceleration: 210 steps/s^2
+    deceleration: 420 steps/s^2
+
+  - platform: a4988 
+    id: secondaryStepper
+    sleep_pin:
+      number: GPIO19
+      #inverted: True
+    step_pin: GPIO33
+    dir_pin: GPIO18
+    max_speed: 610 steps/s
+    #acceleration: 210 steps/s^2
+    acceleration: 100 steps/s^2
+    deceleration: 420 steps/s^2
+
+cover:
+  - platform: template
+    device_class: window
+    name: "Callan's East Window"
+    open_action:
+      - output.set_level:
+          id: dac_output
+          #level: 70%
+          level: 20%
+      - stepper.set_speed:
+          id: mainStepper
+          speed: 420 steps/s
+      - stepper.set_target:
+          id: mainStepper
+          target: 0
+    close_action:
+      - output.set_level:
+          id: dac_output
+          #level: 50%
+          level: 10%
+      - stepper.set_speed:
+          id: mainStepper
+          speed: 610 steps/s
+      - stepper.set_target:
+          id: mainStepper
+          target: 45400
+    stop_action:
+      - stepper.set_target:
+          id: mainStepper
+          target: !lambda return id(mainStepper).current_position;
+    optimistic: true
+
+  - platform: template
+    device_class: window
+    name: "Callan's North Window"
+    open_action:
+      - stepper.set_speed:
+          id: secondaryStepper
+          #speed: 420 steps/s
+          speed: 250 steps/s
+      - stepper.set_target:
+          id: secondaryStepper
+          target: 0
+    close_action:
+      - stepper.set_speed:
+          id: secondaryStepper
+          speed: 610 steps/s
+      - stepper.set_target:
+          id: secondaryStepper
+          target: 16000
+    stop_action:
+      - stepper.set_target:
+          id: secondaryStepper
+          target: !lambda return id(secondaryStepper).current_position;
+    optimistic: true

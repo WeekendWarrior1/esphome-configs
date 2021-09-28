@@ -1,0 +1,132 @@
+esphome:
+    name: upstairswindowwest
+    #platform: ESP8266
+    #board: d1_mini
+    platform: ESP32
+    board: wemos_d1_mini32
+  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "UpstairsWindowWest Hotspot"
+    password: !secret ap_pass
+
+# Enable logging
+logger:
+  level: DEBUG
+
+ota:
+
+api:
+
+#web_server:
+#  port: 80
+
+#output:
+#  - platform: esp32_dac
+#    pin: GPIO25
+#    id: dac_output
+
+switch:
+  - platform: template
+    name: "West Window Quiet Mode"
+    icon: "mdi:sleep"
+    id: "quietmode"
+    optimistic: true
+
+#numerical variable, which hass can set
+#then read that number and set stepper speed as
+#Upstairs West Blind Speed
+# sensor:
+#   - platform: homeassistant
+#     id: blind_speed
+#     entity_id: input_number.upstairs_west_blind_speed
+#     attribute: state
+#     on_value:
+#       then:
+#         - logger.log:
+#             format: "blind_speed %.1f"
+#             args: [ '(id(blind_speed).state)' ]
+#             level: ERROR
+
+stepper:
+#  - platform: a4988 
+#    id: mainStepper
+#    sleep_pin:
+#      number: GPIO5
+#      #inverted: True
+#    step_pin: GPIO14
+#    dir_pin: GPIO23
+#    max_speed: 610 steps/s
+#    acceleration: 50 steps/s^2
+#    deceleration: 200 steps/s^2
+
+  - platform: a4988 
+    id: secondaryStepper
+    sleep_pin:
+      number: GPIO19
+      #inverted: True
+    step_pin: GPIO33
+    dir_pin: GPIO18
+    max_speed: 600 steps/s
+    acceleration: 210 steps/s^2
+    #acceleration: 100 steps/s^2
+    deceleration: 420 steps/s^2
+
+cover:
+  - platform: template
+    device_class: shade
+    name: "Upstairs West Blind"
+    id: upstairsWestBlind
+    has_position: true
+    optimistic: true
+    open_action:
+      - stepper.set_speed:
+          id: secondaryStepper
+          #speed: 250 steps/s
+          speed: 36 steps/s
+      - if:
+          condition:
+              switch.is_off: quietmode
+          then:
+              - stepper.set_speed:
+                  id: secondaryStepper
+                  speed: 360 steps/s
+      - stepper.set_target:
+          id: secondaryStepper
+          target: 0
+    close_action:
+      - stepper.set_speed:
+          id: secondaryStepper
+          speed: 36 steps/s
+          #speed: 300 steps/s
+      - if:
+          condition:
+              switch.is_off: quietmode
+          then:
+              - stepper.set_speed:
+                  id: secondaryStepper
+                  speed: 600 steps/s
+              # - stepper.set_acceleration:
+              #     id: secondaryStepper
+              #     acceleration: 60 steps/s^2
+              # - stepper.set_deceleration:
+              #     id: secondaryStepper
+              #     deceleration: 60 steps/s^2
+      - stepper.set_target:
+          id: secondaryStepper
+          target: 23200
+    stop_action:
+      - stepper.set_target:
+          id: secondaryStepper
+          target: !lambda return id(secondaryStepper).current_position;
+      - cover.template.publish:
+          id: upstairsWestBlind
+          position: !lambda return (1 - (id(secondaryStepper).current_position/23200.0)); #NOTE: ALL INTEGERS NEED TO HAVE .0 ATTACHED TO END (TURNED TO FLOAT) ELSE WILL COME BACK AS INTEGER
+    position_action:
+      - stepper.set_target:
+          id: secondaryStepper
+          target: !lambda return (23200 - (pos*23200));

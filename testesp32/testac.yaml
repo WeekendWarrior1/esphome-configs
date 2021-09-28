@@ -1,0 +1,140 @@
+esphome:
+  name: testac
+  # platform: ESP32
+  # board: wemos_d1_mini32
+  platform: ESP8266
+  board: d1_mini
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "testac Fallback Hotspot"
+    password: !secret ap_pass
+
+# Enable logging
+logger:
+    level: VERBOSE
+
+ota:
+
+api:
+
+# e131:
+#   method: unicast
+
+# light:
+#   - platform: neopixelbus
+#     type: RGBW
+#     pin: GPIO17
+#     variant: SK6812
+#     num_leds: 3
+#     name: "Test AC LED Strip"
+#     gamma_correct: 0
+#     default_transition_length: 0s
+#     # effects:
+#     #   - e131:
+#     #       universe: 1
+#     #       channels: RGB
+#     #   - addressable_rainbow:
+#     #       width: 18
+
+# wled:
+
+# light:
+#   - platform: fastled_clockless
+#     rgb_order: GRB
+#     pin: GPIO17
+#     chipset: WS2812B
+#     num_leds: 20
+#     name: "Test AC LED Strip"
+#     gamma_correct: 0
+#     max_refresh_rate: 16ms
+#     effects:
+#       - addressable_rainbow:
+#           width: 20
+#       - wled:
+
+
+# remote_receiver:
+#   id: rcvr
+#   pin:
+#     number: GPIO23
+#     inverted: True
+#     mode: INPUT_PULLUP
+#   tolerance: 55%
+
+# remote_transmitter:
+#   pin:
+#     number: GPIO16
+#     inverted: True
+#   carrier_duty_percent: 100%
+
+# climate:
+#   - platform: panasonic
+#     name: "Test AC"
+#     # receiver_id: rcvr
+#     supports_vertical_swing: true
+
+output:
+  - platform: esp8266_pwm
+    id: output_blue
+    pin: GPIO14
+  - platform: esp8266_pwm
+    id: output_green
+    pin: GPIO12
+  - platform: esp8266_pwm
+    id: output_red
+    pin: GPIO13
+
+e131:
+  method: unicast
+
+light:
+  - platform: neopixelbus
+    type: RGBW
+    # pin: GPIO17
+    pin: GPIO3
+    variant: SK6812
+    num_leds: 10
+    name: "Test AC LED Strip 8266"
+    gamma_correct: 0
+    default_transition_length: 0s
+    effects:
+      - e131:
+          universe: 1
+          channels: RGB
+      - addressable_rainbow:
+          width: 18
+    on_turn_on:
+    - logger.log: "Light Turned On!"
+    on_turn_off:
+    - logger.log: "Light Turned Off!"
+    on_state_change:
+    # - logger.log: "Light state changed!"
+    - light.control:
+        id: pwm_rgb
+        state: on
+        transition_length: 0.0s
+        red: !lambda return test.red/255.0;
+        green: !lambda return test.green/255.0;
+        blue: !lambda return test.blue/255.0;
+
+  - platform: rgb
+    # name: '${name}'
+    internal: true
+    id: pwm_rgb
+    red: output_red
+    green: output_green
+    blue: output_blue
+
+remote_receiver:
+  id: ir_receiver
+  pin: D4
+  forward_to: ir_transmitter # this is the new option
+
+remote_transmitter:
+  id: ir_transmitter
+  pin: D8
+  carrier_duty_percent: 100%

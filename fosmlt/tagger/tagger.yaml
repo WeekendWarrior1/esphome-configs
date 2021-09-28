@@ -1,0 +1,177 @@
+esphome:
+  name: tagger
+  platform: ESP32
+  board: wemos_d1_mini32
+  platformio_options:
+    upload_speed: 921600
+  on_boot:
+    priority: 700
+    then:
+      - light.turn_on:
+          id: back_light
+          brightness: 50%
+
+# wifi:
+#   ssid: !secret wifi_ssid
+#   password: !secret wifi_pass
+#   # Enable fallback hotspot (captive portal) in case wifi connection fails
+#   ap:
+#     ssid: "fosmlt tagger Fallback Hotspot"
+#     password: !secret ap_pass
+
+# Enable logging
+logger:
+  level: DEBUG
+  # level: INFO
+
+# ota:
+
+# # Example configuration entry
+# mqtt:
+#   broker: 192.168.1.167
+#   # username: livingroom
+#   # password: MyMQTTPassword
+
+# time:
+#   - platform: sntp
+#     id: sntp_time
+#     timezone: "Australia/Melbourne"
+#     on_time_sync:
+#       then:
+#         - logger.log: "Synchronized system clock"
+
+# web_server:
+#   port: 80
+
+esp32_ble:
+
+font:
+  - file: "files/Ubuntu-R.ttf"
+    id: my_font
+    size: 30
+
+spi:
+  # clk_pin: GPIO5      #SCK
+  # # mosi_pin: GPIO12
+  # miso_pin: GPIO32    #SDA
+
+  clk_pin: GPIO18      #SCK
+  mosi_pin: GPIO23
+  # miso_pin: GPIO23    #SDA
+
+color:
+  - id: my_red
+    red: 100%
+    green: 3%
+    blue: 5%
+  - id: my_blue
+    red: 3%
+    green: 5%
+    blue: 100%
+  - id: my_green
+    red: 3%
+    green: 100%
+    blue: 5%
+  - id: my_cyan
+    red: 3%
+    green: 100%
+    blue: 100%
+  - id: my_yellow
+    red: 100%
+    green: 100%
+    blue: 0%
+  - id: my_black
+    red: 0%
+    green: 0%
+    blue: 0%
+
+#create nested display object that can update singular elements of display, eg time, health, battery, ammo
+display:
+  - platform: gc9a01
+    # model: M5STACK
+    cs_pin: GPIO5
+    dc_pin: GPIO27
+    # led_pin: GPIO22  ### see note below ###
+    reset_pin: GPIO33
+    update_interval: 5s
+    rotation: 90
+    id: my_display
+    lambda: |-
+      //it.strftime(0, 40, id(my_font), "%H%M", id(sntp_time).now());
+
+      it.circle(120, 120, 10, my_cyan);
+      it.circle(120, 120, 20, my_yellow);
+      it.circle(120, 120, 30, my_cyan);
+      it.circle(120, 120, 40, my_yellow);
+      it.circle(120, 120, 50, my_cyan);
+      it.circle(120, 120, 60, my_yellow);
+      it.circle(120, 120, 70, my_cyan);
+      it.circle(120, 120, 80, my_yellow);
+      it.circle(120, 120, 90, my_cyan);
+      it.circle(120, 120, 100, my_yellow);
+      it.circle(120, 120, 110, my_cyan);
+      it.circle(120, 120, 118, my_yellow);
+      it.filled_rectangle(40, 40, 160, 160);
+      it.line(40, 40, 200, 200, id(my_blue));
+      it.line(200, 40, 40, 200, id(my_red));
+      it.line(120, 40, 120, 200, id(my_green));
+      it.print(124, 105, id(my_font), id(my_black), TextAlign::CENTER_HORIZONTAL, "Hello World!");
+
+    # pages:
+    #   - id: page1
+    #     lambda: |-
+    #       it.print(0, 10, id(my_font), "This is page 1!");
+    #   - id: page2
+    #     lambda: |-
+    #       it.print(0, 10, id(my_font), "This is page 2!");
+
+# Define a PWM output on the ESP32
+output:
+  - platform: ledc
+    pin: GPIO22
+    id: gpio_22_backlight_pwm
+
+# Define a monochromatic, dimmable light for the backlight
+light:
+  - platform: monochromatic
+    output: gpio_22_backlight_pwm
+    name: "ILI9341 Display Backlight"
+    id: back_light
+    restore_mode: ALWAYS_ON
+
+# remote_transmitter:
+#   pin: GPIO32
+#   carrier_duty_percent: 50%
+
+# binary_sensor:
+#   - platform: gpio
+#     pin:
+#       number: D2
+#       mode: INPUT_PULLUP
+#     id: trigger
+#     # delayed_on_off: 5ms
+#     #required
+
+#   - platform: gpio
+#     pin:
+#       number: D3
+#       mode: INPUT_PULLUP
+#     id: reload_button
+#     # delayed_on_off: 5ms
+#     #optional
+
+# sensor:
+#   - platform: adc
+#     pin: GPIO32
+#     id: firemode_selector
+#     name: "firemode_selector"
+#     update_interval: 100ms
+#     attenuation: 11db #(3.9v range)
+
+
+# script:
+#   - id: fire_tagger
+#     then:
+#       - switch.turn_on: my_switch
+#       - delay: 1s
+#       - switch.turn_off: my_switch

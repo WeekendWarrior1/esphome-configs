@@ -1,0 +1,33 @@
+esphome:
+  name: upstairsac
+  platform: ESP8266
+  board: d1_mini
+  includes: 
+    - panasonic_ir.h
+  libraries:
+    - IRremoteESP8266
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "upstairsac Fallback Hotspot"
+    password: !secret ap_pass
+
+# Enable logging
+logger:
+
+ota:
+
+api:
+
+climate:
+- platform: custom
+  lambda: |-
+    auto my_panasonic = new PanasonicAC();
+    App.register_component(my_panasonic);
+    return {my_panasonic};
+
+  climates:
+    - name: "Upstairs AC"

@@ -1,0 +1,60 @@
+esphome:
+  name: loungeacnew
+  platform: ESP32
+  board: wemos_d1_mini32
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "loungeac Fallback Hotspot"
+    password: !secret ap_pass
+
+# Enable logging
+logger:
+    # level: VERBOSE
+
+ota:
+
+api:
+
+e131:
+  method: unicast
+
+
+light:
+  - platform: neopixelbus
+    type: RGBW
+    pin: GPIO17
+    variant: SK6812
+    num_leds: 18
+    name: "Lounge AC LED Strip"
+    effects:
+      - e131:
+          universe: 1
+          channels: RGB
+      - addressable_rainbow:
+          width: 24
+
+# remote_receiver:
+#   id: rcvr
+#   pin:
+#     number: GPIO23
+#     inverted: True
+#     mode: INPUT_PULLUP
+#   tolerance: 55%
+#   filter: 255us
+#   dump: all
+
+remote_transmitter:
+  pin:
+    number: GPIO16
+    inverted: True
+  carrier_duty_percent: 100%
+
+climate:
+  - platform: panasonic
+    name: "Lounge AC"
+    # receiver_id: rcvr
+    supports_vertical_swing: true

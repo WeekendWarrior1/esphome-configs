@@ -1,0 +1,92 @@
+esphome:
+  name: testesp
+  # platform: ESP32
+  # board: wemos_d1_mini32
+  platform: ESP8266
+  board: d1_mini
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "testesp Fallback Hotspot"
+    password: !secret ap_pass
+
+# Enable logging
+logger:
+  level: DEBUG
+
+ota:
+
+# api:
+
+# web_server:
+#   port: 80
+
+# remote_receiver:
+#   pin:
+#     number: GPIO16
+#     # inverted: True
+#   # pin: D2
+#   dump: rc_switch
+#   # dump: all
+#   tolerance: 60%
+#   filter: 250us
+#   idle: 4ms
+#   # https://github.com/esphome/issues/issues/1360
+#   # https://alexmekkering.github.io/esphome-config/RFReceiver.html
+
+
+sensor:
+  - platform: rotary_encoder
+    internal: true
+    name: "Rotary Encoder"
+    pin_a: D3
+    pin_b: D4
+
+
+output:                 # https://learn.adafruit.com/improve-brushed-dc-motor-performance/introduction
+  - platform: esp8266_pwm
+    pin: GPIO33   #step_pin
+    id: motor1_forward
+    frequency: 32Hz #https://esphome.io/components/output/ledc.html#recommended-frequencies
+  - platform: esp8266_pwm
+    pin: GPIO18   #dir_pin
+    id: motor1_reverse
+    frequency: 32Hz #https://esphome.io/components/output/ledc.html#recommended-frequencies
+
+
+dc_motor:    # based off stepper?
+  - platform: h_bridge   # outputs?
+    id: my_dc_motor
+    forward: motor1_forward 
+    reverse: motor1_reverse # optional
+    decay: slow   # slow decay mode (braking) or fast decay (coasting).
+    feedback: mypulsecounter    # sensor, pulse counter or rotary encoder, what about i2c as5600
+    # or 
+    feedback: 
+      id: mypulsecounter
+      set_speed: 10 steps/s   # 1 full rotation every 2 seconds
+      acceleration: 4 steps/s^2
+      deceleration: 5 steps/s^2
+      control_parameters:   #should this have default values?     # https://esphome.io/components/climate/pid.html
+        kp: 0.49460
+        ki: 0.00487
+        kd: 12.56301
+
+cover:
+  - platform: template
+    device_class: window
+    name: "Callan's East Window"
+    open_action:
+      - dc_motor.forward: my_dc_motor
+    close_action:
+      - dc_motor.reverse: my_dc_motor
+    stop_action:
+      - output.turn_on: motor1_forward #brake
+      - output.turn_on: motor1_reverse #brake
+      - delay: 100ms
+      - output.turn_off: motor1_forward
+      - output.turn_off: motor1_reverse
+    optimistic: true

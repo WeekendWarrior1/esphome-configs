@@ -1,0 +1,23 @@
+esphome:
+  name: callanbedwindow
+  platform: ESP32
+  board: lolin32
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Callanbedwindow Fallback Hotspot"
+    password: !secret ap_pass
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+
+output:
