@@ -19,9 +19,15 @@ ota:
 
 api:
 
+external_components:
+  - source:
+      type: git
+      url: https://github.com/WeekendWarrior1/esphome
+      ref: panasonic_climate
+    components: [ panasonic ]
+
 e131:
   method: unicast
-
 
 light:
   - platform: neopixelbus
