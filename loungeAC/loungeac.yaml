@@ -23,11 +23,13 @@ external_components:
   - source:
       type: git
       url: https://github.com/WeekendWarrior1/esphome
-      ref: panasonic_climate
+      ref: final_ac
     components: [ panasonic ]
 
-e131:
-  method: unicast
+# e131:
+  # method: unicast
+
+wled:
 
 light:
   - platform: neopixelbus
@@ -37,11 +39,12 @@ light:
     num_leds: 18
     name: "Lounge AC LED Strip"
     effects:
-      - e131:
-          universe: 1
-          channels: RGB
+      # - e131:
+      #     universe: 1
+      #     channels: RGB
       - addressable_rainbow:
           width: 24
+      - wled:
 
 # remote_receiver:
 #   id: rcvr
@@ -63,4 +66,18 @@ climate:
   - platform: panasonic
     name: "Lounge AC"
     # receiver_id: rcvr
-    supports_vertical_swing: true
+    # supports_vertical_swing: true
+    conf_supports_vertical_swing: true
+
+esp32_ble_tracker:
+
+sensor:
+  - platform: xiaomi_lywsd03mmc
+    mac_address: "A4:C1:38:FC:09:29"
+    bindkey: "a4dbce5825213ea4779dfe60694029ec"
+    temperature:
+      name: "Lounge Temperature"
+    humidity:
+      name: "Lounge Humidity"
+    battery_level:
+      name: "LYWSD03MMC Battery Level"

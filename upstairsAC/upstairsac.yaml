@@ -23,11 +23,13 @@ external_components:
   - source:
       type: git
       url: https://github.com/WeekendWarrior1/esphome
-      ref: panasonic_climate
+      ref: final_ac
     components: [ panasonic ]
 
-e131:
-  method: unicast
+# e131:
+#   method: unicast
+
+wled:
 
 light:
   - platform: neopixelbus
@@ -37,11 +39,12 @@ light:
     num_leds: 14
     name: "Lounge AC LED Strip"
     effects:
-      - e131:
-          universe: 1
-          channels: RGB
+      # - e131:
+      #     universe: 1
+      #     channels: RGB
       - addressable_rainbow:
           width: 18
+      - wled:
 
 # remote_receiver:
 #   id: rcvr
@@ -61,4 +64,7 @@ climate:
   - platform: panasonic
     name: "Upstairs AC"
     # receiver_id: rcvr
-    supports_vertical_swing: true
+    # supports_vertical_swing: true
+    conf_supports_vertical_swing: true
+
+esp32_ble_tracker:
